@@ -1,8 +1,5 @@
-# jumping_dots
+# Jumping dots progress indicator
 
-A new Flutter project.
+A simple Animated Widget that can be used as an indicator for text loading.
 
-## Getting Started
-
-For help getting started with Flutter, view our online
-[documentation](https://flutter.io/).
+## Documentation to be further updated
