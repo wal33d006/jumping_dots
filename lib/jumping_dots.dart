@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/animation.dart';
 
-class JumpingDot extends AnimatedWidget {
+class _JumpingDot extends AnimatedWidget {
   final Color color;
   final double fontSize;
-  JumpingDot({Key key, Animation<double> animation, this.color, this.fontSize})
+  _JumpingDot({Key key, Animation<double> animation, this.color, this.fontSize})
       : super(key: key, listenable: animation);
 
   Widget build(BuildContext context) {
@@ -84,7 +84,7 @@ class _JumpingDotsProgressIndicatorState
   void _addListOfDots(int index) {
     _widgets.add(Padding(
       padding: EdgeInsets.only(right: dotSpacing),
-      child: JumpingDot(
+      child: _JumpingDot(
         animation: animations[index],
         fontSize: fontSize,
         color: color,
