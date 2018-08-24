@@ -47,15 +47,16 @@ class JumpingDotsProgressIndicator extends StatefulWidget {
 }
 
 class _JumpingDotsProgressIndicatorState
-    extends State<JumpingDotsProgressIndicator> with TickerProviderStateMixin {
+    extends State<JumpingDotsProgressIndicator>
+    with SingleTickerProviderStateMixin {
   int numberOfDots;
   int milliseconds;
   double fontSize;
   double dotSpacing;
   Color color;
-  List<AnimationController> controllers = new List<AnimationController>();
-  List<Animation<double>> animations = new List<Animation<double>>();
-  List<Widget> _widgets = new List<Widget>();
+  AnimationController controller;
+  List<Animation<double>> animations;
+  List<Widget> _widgets;
 
   _JumpingDotsProgressIndicatorState({
     this.numberOfDots,
@@ -67,48 +68,58 @@ class _JumpingDotsProgressIndicatorState
 
   initState() {
     super.initState();
-    for (int i = 0; i < numberOfDots; i++) {
-      _addAnimationControllers();
-      _buildAnimations(i);
-      _addListOfDots(i);
-    }
 
-    controllers[0].forward();
+    final totalDuration =
+        Duration(milliseconds: widget.milliseconds * widget.numberOfDots);
+    controller = AnimationController(duration: totalDuration, vsync: this);
+    controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        //restarting animation
+        controller.reset();
+        controller.forward();
+      }
+    });
+
+    // setting up animations for each dot
+    final _jumpDurationInterval = 1.0 / widget.numberOfDots;
+    animations = List.generate(widget.numberOfDots,
+        (index) => _generateDotAnimation(index, _jumpDurationInterval));
+
+    // populate widgets
+    _widgets = List.generate(widget.numberOfDots, _createDot);
+
+    // start animation
+    controller.forward();
   }
 
-  void _addAnimationControllers() {
-    controllers.add(AnimationController(
-        duration: Duration(milliseconds: milliseconds), vsync: this));
+  Animation<double> _generateDotAnimation(
+      int index, double jumpDurationInterval) {
+    var begin = index * jumpDurationInterval;
+    var upAnimation = CurvedAnimation(
+        parent: controller,
+        curve: Interval(begin, begin + jumpDurationInterval));
+
+    Animation<double> downAnimation = CurvedAnimation(
+        parent: controller,
+        curve: Interval(begin, begin + jumpDurationInterval));
+
+    downAnimation = Tween(begin: 1.0, end: 0.0).animate(downAnimation);
+
+    return Tween<double>(
+            begin: widget.beginTweenValue,
+            end: widget.endTweenValue *
+                2) // to compensate using AnimationMin (max value is 0.5)
+        .animate(AnimationMin(upAnimation, downAnimation));
   }
 
-  void _addListOfDots(int index) {
-    _widgets.add(Padding(
-      padding: EdgeInsets.only(right: dotSpacing),
-      child: _JumpingDot(
-        animation: animations[index],
-        fontSize: fontSize,
-        color: color,
-      ),
-    ));
-  }
-
-  void _buildAnimations(int index) {
-    animations.add(
-        Tween(begin: widget.beginTweenValue, end: widget.endTweenValue)
-            .animate(controllers[index])
-          ..addStatusListener((AnimationStatus status) {
-            if (status == AnimationStatus.completed)
-              controllers[index].reverse();
-            if (index == numberOfDots - 1 &&
-                status == AnimationStatus.dismissed) {
-              controllers[0].forward();
-            }
-            if (animations[index].value > widget.endTweenValue / 2 &&
-                index < numberOfDots - 1) {
-              controllers[index + 1].forward();
-            }
-          }));
-  }
+  Widget _createDot(int index) => Padding(
+        padding: EdgeInsets.only(right: dotSpacing),
+        child: _JumpingDot(
+          animation: animations[index],
+          fontSize: fontSize,
+          color: color,
+        ),
+      );
 
   Widget build(BuildContext context) {
     return SizedBox(
@@ -121,7 +132,7 @@ class _JumpingDotsProgressIndicatorState
   }
 
   dispose() {
-    for (int i = 0; i < numberOfDots; i++) controllers[i].dispose();
+    controller.dispose();
     super.dispose();
   }
 }
