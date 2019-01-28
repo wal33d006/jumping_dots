@@ -81,9 +81,14 @@ class _JumpingDotsProgressIndicatorState
     });
 
     // setting up animations for each dot
-    final _jumpDurationInterval = 1.0 / widget.numberOfDots;
+    // how much of the dot animation has to be played before the next dot starts jumping
+    // 1.0 - each dot jumps after previous has landed
+    // 0.0 - all dots jumps together
+    final _jumpDelay = 0.5; 
+    final _animationsInFullJumps = _jumpDelay * widget.numberOfDots + (1.0 - _jumpDelay); 
+    final _jumpDuration = 1.0 / _animationsInFullJumps;
     animations = List.generate(widget.numberOfDots,
-        (index) => _generateDotAnimation(index, _jumpDurationInterval));
+        (index) => _generateDotAnimation(index, _jumpDuration, _jumpDelay));
 
     // populate widgets
     _widgets = List.generate(widget.numberOfDots, _createDot);
@@ -93,15 +98,15 @@ class _JumpingDotsProgressIndicatorState
   }
 
   Animation<double> _generateDotAnimation(
-      int index, double jumpDurationInterval) {
-    var begin = index * jumpDurationInterval;
+      int index, double jumpDuration, double jumpDelay) {
+    var begin = index * jumpDuration * jumpDelay;
     var upAnimation = CurvedAnimation(
         parent: controller,
-        curve: Interval(begin, begin + jumpDurationInterval));
+        curve: Interval(begin, begin + jumpDuration));
 
     Animation<double> downAnimation = CurvedAnimation(
         parent: controller,
-        curve: Interval(begin, begin + jumpDurationInterval));
+        curve: Interval(begin, begin + jumpDuration));
 
     downAnimation = Tween(begin: 1.0, end: 0.0).animate(downAnimation);
 
