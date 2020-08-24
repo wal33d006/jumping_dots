@@ -35,7 +35,7 @@ class JumpingDotsProgressIndicator extends StatefulWidget {
       this.color = Colors.black,
       this.dotSpacing = 0.0,
       this.milliseconds = 250})
-      : endTweenValue = fontSize / 3;
+      : endTweenValue = fontSize / 4;
 
   @override
   _JumpingDotsProgressIndicatorState createState() =>
