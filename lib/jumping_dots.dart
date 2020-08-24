@@ -7,10 +7,11 @@ class _JumpingDot extends AnimatedWidget {
   _JumpingDot({Key key, Animation<double> animation, this.color, this.fontSize})
       : super(key: key, listenable: animation);
 
+  @override
   Widget build(BuildContext context) {
     final Animation<double> animation = listenable;
-    return Container(
-      height: animation.value,
+    return Transform.translate(
+      offset: Offset(0, -animation.value),
       child: Text(
         '.',
         style: TextStyle(color: color, fontSize: fontSize),
@@ -26,23 +27,24 @@ class JumpingDotsProgressIndicator extends StatefulWidget {
   final Color color;
   final int milliseconds;
   final double beginTweenValue = 0.0;
-  final double endTweenValue = 8.0;
+  final double endTweenValue;
 
-  JumpingDotsProgressIndicator({
-    this.numberOfDots = 3,
-    this.fontSize = 10.0,
-    this.color = Colors.black,
-    this.dotSpacing = 0.0,
-    this.milliseconds = 250,
-  });
+  JumpingDotsProgressIndicator(
+      {this.numberOfDots = 3,
+      this.fontSize = 10.0,
+      this.color = Colors.black,
+      this.dotSpacing = 0.0,
+      this.milliseconds = 250})
+      : endTweenValue = fontSize / 4;
 
+  @override
   _JumpingDotsProgressIndicatorState createState() =>
       _JumpingDotsProgressIndicatorState(
-        numberOfDots: this.numberOfDots,
-        fontSize: this.fontSize,
-        color: this.color,
-        dotSpacing: this.dotSpacing,
-        milliseconds: this.milliseconds,
+        numberOfDots: numberOfDots,
+        fontSize: fontSize,
+        color: color,
+        dotSpacing: dotSpacing,
+        milliseconds: milliseconds,
       );
 }
 
@@ -53,9 +55,9 @@ class _JumpingDotsProgressIndicatorState
   double fontSize;
   double dotSpacing;
   Color color;
-  List<AnimationController> controllers = new List<AnimationController>();
-  List<Animation<double>> animations = new List<Animation<double>>();
-  List<Widget> _widgets = new List<Widget>();
+  final List<AnimationController> controllers = <AnimationController>[];
+  final List<Animation<double>> animations = <Animation<double>>[];
+  final List<Widget> _widgets = <Widget>[];
 
   _JumpingDotsProgressIndicatorState({
     this.numberOfDots,
@@ -65,9 +67,10 @@ class _JumpingDotsProgressIndicatorState
     this.milliseconds,
   });
 
-  initState() {
+  @override
+  void initState() {
     super.initState();
-    for (int i = 0; i < numberOfDots; i++) {
+    for (var i = 0; i < numberOfDots; i++) {
       _addAnimationControllers();
       _buildAnimations(i);
       _addListOfDots(i);
@@ -96,32 +99,34 @@ class _JumpingDotsProgressIndicatorState
     animations.add(
         Tween(begin: widget.beginTweenValue, end: widget.endTweenValue)
             .animate(controllers[index])
-          ..addStatusListener((AnimationStatus status) {
-            if (status == AnimationStatus.completed)
-              controllers[index].reverse();
-            if (index == numberOfDots - 1 &&
-                status == AnimationStatus.dismissed) {
-              controllers[0].forward();
-            }
-            if (animations[index].value > widget.endTweenValue / 2 &&
-                index < numberOfDots - 1) {
-              controllers[index + 1].forward();
-            }
-          }));
+              ..addStatusListener((AnimationStatus status) {
+                if (status == AnimationStatus.completed)
+                  controllers[index].reverse();
+                if (index == numberOfDots - 1 &&
+                    status == AnimationStatus.dismissed) {
+                  controllers[0].forward();
+                }
+                if (animations[index].value > widget.endTweenValue / 2 &&
+                    index < numberOfDots - 1) {
+                  controllers[index + 1].forward();
+                }
+              }));
   }
 
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 30.0,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: _widgets,
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: _widgets,
     );
   }
 
-  dispose() {
-    for (int i = 0; i < numberOfDots; i++) controllers[i].dispose();
+  @override
+  void dispose() {
+    for (var i = 0; i < numberOfDots; i++) {
+      controllers[i].dispose();
+    }
     super.dispose();
   }
 }
